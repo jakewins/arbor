@@ -32,7 +32,7 @@ YUI_OPTIONS = "--type=js"
 # YUI_OPTIONS = "--nomunge --disable-optimizations --type=js"
 
 
-
+COMPRESS = False
 
 
 
@@ -150,19 +150,21 @@ def compile(js, title=None, padding=10):
   yui_input = filter_src(yui_input, title)
 
   input_hash = md5(yui_input).hexdigest()
-  yui_output = precompiled(input_hash, title)
-  if not yui_output:
-    print "+",title.replace('.js','')
-    p = Popen(yui_cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
-    (pin, pout) = (p.stdin, p.stdout)
-    pin.write(yui_input)
-    yui_output=p.communicate()[0].strip()
+  if COMPRESS:
+    yui_output = precompiled(input_hash, title)
     if not yui_output:
-      print "Compilation failed (%s)"%title
-      sys.exit(1)
+      print "+",title.replace('.js','')
+      p = Popen(yui_cmd, shell=True, stdin=PIPE, stdout=PIPE, close_fds=True)
+      (pin, pout) = (p.stdin, p.stdout)
+      pin.write(yui_input)
+      yui_output=p.communicate()[0].strip()
+      if not yui_output:
+        print "Compilation failed (%s)"%title
+        sys.exit(1)
 
-    postcompile(input_hash, yui_output, title)
-
+      postcompile(input_hash, yui_output, title)
+  else:
+    yui_output = yui_input
 
 
   

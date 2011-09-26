@@ -69,8 +69,8 @@
       },
 
 
-      start:function(){
-        state.kernel.start()
+      start:function(unpause){
+        state.kernel.start(unpause === false ? false : true)
       },
       stop:function(){
         state.kernel.stop()
@@ -573,80 +573,73 @@
           _changes = []
           _notification = null
         }
-      },
+      }
     }
 
     state.kernel = Kernel(that)
     state.tween = state.kernel.tween || null
 
-    // Firefox 3 doesn't support defineProperty, so we set it here
-    if (typeof Object.defineProperty != 'function'){
-      Object.defineProperty = function(obj, prop, descriptor){
-	if (descriptor.get){
-	  obj.__defineGetter__(prop, descriptor.get);
-	}
-	if (descriptor.set) {
-	  obj.__defineSetter__(prop, descriptor.set);
-	}
-      };
-    }
-
     // some magic attrs to make the Node objects phone-home their physics-relevant changes
-    Object.defineProperty
-    (Node.prototype, "p", {
-       get:function() {
-	 var self = this
-	 var roboPoint = {}
 
-	 Object.defineProperty
-	 (roboPoint, 'x', {
-	    get:function(){ return self._p.x; },
-	    set:function(newX){ state.kernel.particleModified(self._id, {x:newX}) }
-	  }
-	 );
+    var defineProperty = (window.__defineGetter__ == null || window.__defineSetter__ == null) ?
+      function (obj, name, desc){
+        if(!obj.hasOwnProperty(name)){
+Object.defineProperty(obj, name, desc);
+        }
+      }
+        :
+      function (obj, name, desc) {
+        if (desc.get)
+          obj.__defineGetter__(name, desc.get)
+        if (desc.set)
+          obj.__defineSetter__(name, desc.set)
+      };
 
-	 Object.defineProperty
-	 (roboPoint, 'y', {
-	    get:function(){ return self._p.y; },
-	    set:function(newY){ state.kernel.particleModified(self._id, {y:newY}) }
-	  }
-	 );
-	 roboPoint.__proto__ = Point.prototype;
-	 return roboPoint;
-       },
-       set:function(newP) {
-	 this._p.x = newP.x
-	 this._p.y = newP.y
-	 state.kernel.particleModified(this._id, {x:newP.x, y:newP.y})
-       }
-     }
-    );
-
-    Object.defineProperty
-    (Node.prototype, "mass", {
-       get:function() { return this._mass; },
-       set:function(newM) {
-	 this._mass = newM
-	 state.kernel.particleModified(this._id, {m:newM})
-       }
-     }
-    );
-
-    /*
-    Node.prototype.__defineSetter__("tempMass", function(newM) {
-      state.kernel.particleModified(this._id, {_m:newM})
+    var RoboPoint = function (n) {
+      this._n = n;
+    }
+    RoboPoint.prototype = new Point();
+    defineProperty(RoboPoint.prototype, "x", {
+      get: function(){ return this._n._p.x; },
+      set: function(newX){ state.kernel.particleModified(this._n._id, {x:newX}) }
     })
-     */
+    defineProperty(RoboPoint.prototype, "y", {
+      get: function(){ return this._n._p.y; },
+      set: function(newY){ state.kernel.particleModified(this._n._id, {y:newY}) }
+    })
 
-    Object.defineProperty
-    (Node.prototype, "fixed", {
-       add:function() { return this._fixed; },
-       set:function(isFixed) {
-	 this._fixed = isFixed
-	 state.kernel.particleModified(this._id, {f:isFixed?1:0})
-       }
-     }
-    );
+    defineProperty(Node.prototype, "p", {
+      get: function() {
+        return new RoboPoint(this)
+      },
+      set: function(newP) {
+        this._p.x = newP.x
+        this._p.y = newP.y
+        state.kernel.particleModified(this._id, {x:newP.x, y:newP.y})
+      }
+    })
 
+    defineProperty(Node.prototype, "mass", {
+      get: function() { return this._mass; },
+      set: function(newM) {
+        this._mass = newM
+        state.kernel.particleModified(this._id, {m:newM})
+      }
+    })
+
+    defineProperty(Node.prototype, "tempMass", {
+      set: function(newM) {
+        state.kernel.particleModified(this._id, {_m:newM})
+      }
+    })
+
+    defineProperty(Node.prototype, "fixed", {
+      get: function() { return this._fixed; },
+      set:function(isFixed) {
+        this._fixed = isFixed
+        state.kernel.particleModified(this._id, {f:isFixed?1:0})
+      }
+    })
+    
     return that
   }
