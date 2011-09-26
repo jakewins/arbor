@@ -8,8 +8,8 @@
     if (typeof(window)=='undefined' || !window.console) return
     var len = arguments.length
     var args = []
-    for (var i=0; i<len; i++) args.push("arguments["+i+"]")
-    eval("console.log("+args.join(",")+")")
+    for (var i=0; i<len; i++) args.push(arguments[i])
+    console.log.apply(this, args)
   }  
 
   var dirname = function(path){
