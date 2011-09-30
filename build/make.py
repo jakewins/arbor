@@ -169,7 +169,7 @@ def compile(js, title=None, padding=10):
 
   
   if title:
-    return "/* %s%s */  %s"%(" "*(padding-len(title)),title,yui_output)
+    return "/* %s%s */\n%s"%(" "*(padding-len(title)),title,yui_output)
   else:
     return yui_output
   
